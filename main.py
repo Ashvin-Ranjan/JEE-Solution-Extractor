@@ -88,15 +88,21 @@ def extract_qa_pairs(pdf_path):
             current_question = {
                 "answer": []
             }
+            # Clean up remaining parts of question by removing everything after the answer
+            question = re.split(r'Answer: .+\n', question)[0]
             # Determine if the question is multiple choice
             if re.match(r'[A-D](, [A-D])*', answer_values[i]):
-                question, answers = question.split("\n(A) ")
+                # The last 8 parts are the answers (since in the reconstruction process the answers may have gotten out of order)
+                parts = re.split(r"\(([A-D]\)) ", question)
+                question = "(".join(parts[:-8])
+                answers = parts[-8:]
                 current_question["question"] = parse_pdf_content(question)
-                answers = answers.strip()
-                # Clean up the answers from the last question
-                if i == len(question_split) - 1:
-                    answers = answers.split("\n\n\n")[0]
-                answers_split = re.split(r'\([A-D]\)', answers)
+                answers_split = ["" for i in range(0, len(answers), 2)]
+                for j in range(0, len(answers), 2):
+                    index = ord(answers[j].strip()[0]) - 65
+                    if index < 0 or index > 3:
+                        raise ValueError("Something has gone wrong, value of " + str(index))
+                    answers_split[index] = answers[j+1].strip()
                 processed_answer_values = [ord(j.strip()) - 65 for j in answer_values[i].split(',')]
                 for val in processed_answer_values:
                     if val < 0 or val > 3:

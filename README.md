@@ -9,3 +9,5 @@ Install `pymupdf`:
 ```
 pip install pymupdf
 ```
+
+Create folder `output` (this is where the images will go)
