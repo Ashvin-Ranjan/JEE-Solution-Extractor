@@ -4,8 +4,8 @@ Extracts the question-answer pairs from JEE Advanced papers.
 
 ### Running Instructions
 
-Install `marker-pdf`:
+Install `pymupdf`:
 
 ```
-pip install marker-pdf
+pip install pymupdf
 ```

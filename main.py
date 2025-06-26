@@ -1,5 +1,7 @@
 import fitz
 import re
+import io
+from PIL import Image
 
 # Question format will be as such
 # {
@@ -17,12 +19,59 @@ import re
 def parse_pdf_content(content):
     return [{"type": "text", "value": content}]
 
+
+
+def get_sorted_blocks(page):
+    blocks = page.get_text("dict")["blocks"]
+    sorted_blocks = []
+
+    for block in blocks:
+        bbox = block["bbox"]
+        block_entry = {
+            "type": block["type"],  # 0=text, 1=image
+            "bbox": bbox,
+            "y": bbox[1],  # top y
+            "x": bbox[0],  # left x
+            "block": block
+        }
+        sorted_blocks.append(block_entry)
+
+    # Sort blocks top-to-bottom, then left-to-right (y, x)
+    sorted_blocks.sort(key=lambda b: (round(b["y"], 1), b["x"]))
+    return sorted_blocks
+
+# Preprocessing step to handle images
+def extract_and_preprocess(page):
+    blocks = get_sorted_blocks(page)
+
+    out = ""
+    identifier = 0
+
+    for b in blocks:
+        block = b['block']
+        if block['type'] == 0:
+            # Text block
+            text = ""
+            for line in block['lines']:
+                for span in line['spans']:
+                    text += span['text'] + " "
+            out += text + "\n"
+        
+        elif block['type'] == 1:
+            # Image block
+            img = Image.open(io.BytesIO(block["image"]))
+            out += f"[IMAGE: image_{identifier}.png]"
+            img.save(f"output/image_{identifier}.png")
+            identifier += 1
+            
+    return out
+
 def extract_qa_pairs(pdf_path):
     doc = fitz.open(pdf_path)
     qa_list = []
     
     for page in doc:
-        text = page.get_text("text")
+        text = extract_and_preprocess(page)
         # Normalize text to only use \n
         text.replace("\r\n", "\n")
         # Grab answer values
@@ -30,7 +79,9 @@ def extract_qa_pairs(pdf_path):
         if len(answer_values) == 0:
             continue
         # Can safely remove the first part of the value since the header will always be at the top of the page
-        question_split = re.split(r'Q\.\d+ +\n', text)[1:]
+        question_split = re.split(r'Q\.\d+ +', text)[1:]
+        print(question_split)
+        print(answer_values)
         if len(question_split) != len(answer_values):
             raise ValueError("Question and answer amount do not line up!")
         for i, question in enumerate(question_split):
@@ -39,7 +90,7 @@ def extract_qa_pairs(pdf_path):
             }
             # Determine if the question is multiple choice
             if re.match(r'[A-D](, [A-D])*', answer_values[i]):
-                question, answers = question.split("\n(A) \n")
+                question, answers = question.split("\n(A) ")
                 current_question["question"] = parse_pdf_content(question)
                 answers = answers.strip()
                 # Clean up the answers from the last question
@@ -60,7 +111,7 @@ def extract_qa_pairs(pdf_path):
 
     return qa_list
 
-for qa in extract_qa_pairs("solutions_short.pdf"):
+for qa in extract_qa_pairs("stress.pdf"):
     print("Question:", qa["question"])
     print("Answer:", qa["answer"])
     print("----------------")
