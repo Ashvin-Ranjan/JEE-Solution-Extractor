@@ -42,6 +42,10 @@ def get_sorted_blocks(page):
     sorted_blocks.sort(key=lambda b: (round(b["y"], 1), b["x"]))
     return sorted_blocks
 
+
+def bbox_match(b1, b2, tol=1.0):
+    return all(abs(a - b) <= tol for a, b in zip(b1, b2))
+
 # Preprocessing step to handle images
 def extract_and_preprocess(page):
     blocks = get_sorted_blocks(page)
@@ -61,9 +65,11 @@ def extract_and_preprocess(page):
         
         elif block['type'] == 1:
             # Image block
-            img = Image.open(io.BytesIO(block["image"]))
+            bbox = block["bbox"]
             out += f"[IMAGE: image_{identifier}.png]"
-            img.save(f"output/image_{identifier}.png")
+            matrix = fitz.Matrix(2, 2)  # 2x zoom
+            pix = page.get_pixmap(matrix=matrix, clip=bbox)
+            pix.save(f"output/image_{identifier}.png")
             identifier += 1
             
     return out
@@ -111,8 +117,6 @@ def extract_qa_pairs(pdf_path):
                         raise ValueError("Something has gone wrong, value of " + str(val))
                     current_question["answer"] = parse_pdf_content(answers_split[val].strip())
             else:
-                if i == len(question_split) - 1:
-                    question = question.split("\n\n\n")[0]
                 current_question["question"] = parse_pdf_content(question)
                 current_question["answer"] = parse_pdf_content(answer_values[i])
             qa_list.append(current_question)

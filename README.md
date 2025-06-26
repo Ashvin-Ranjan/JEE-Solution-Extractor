@@ -15,6 +15,14 @@ pip install pillow
 
 Create folder `output` (this is where the images will go)
 
+Run program using the following commend:
+
+```
+python main.py [path to pdf]
+```
+
+Images and JSON output will be in the output directory
+
 ### Explanation
 
 The code itself is currently slightly messy but the main pipeline is as so:
@@ -36,6 +44,8 @@ The code itself is currently slightly messy but the main pipeline is as so:
     -   Images may appear out of order
         -   This can be fixed by improving the block ordering in the first step
     -   Images appear to be exported incorrectly
-        -   This requires a bit more digging into the PyMuPDF documentation in order to understand exactly where the problem is
+        -   ~~This requires a bit more digging into the PyMuPDF documentation in order to understand exactly where the problem is~~
+        -   After more investigation, it appears that the only way to do this is to create an image by rendering only that section of the PDF
+            -   I have implemented this solution
     -   Math does not show up properly
         -   A solution I was thinking of was to pass along information about the bounding boxes of each text block during the preprocessing step. Then, inside `parse_pdf_content` the bounding box of the text could be calculated and PyMuPDF could be used to create an image of the text. This would then be sent to a LLM (such as ChatGPT or Gemini), which would then output the LaTeX for the math.
