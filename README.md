@@ -6,11 +6,10 @@ Extracts the question-answer pairs from JEE Advanced papers.
 
 Ensure you have an up-to-date installation of python (my installation is 3.12.9)
 
-Install `pymupdf` and `pillow`:
+Install `pymupdf`:
 
 ```
 pip install pymupdf
-pip install pillow
 ```
 
 Create folder `output` (this is where the images will go)

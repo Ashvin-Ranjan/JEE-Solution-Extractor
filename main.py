@@ -1,7 +1,5 @@
 import fitz
 import re
-import io
-from PIL import Image
 import sys
 import json
 
@@ -19,7 +17,7 @@ import json
 
 # TODO: handle images
 def parse_pdf_content(content):
-    return [{"type": "text", "value": content}]
+    return [{"type": "text", "value": content.strip()}]
 
 
 
@@ -83,7 +81,7 @@ def extract_qa_pairs(pdf_path):
         # Normalize text to only use \n
         text.replace("\r\n", "\n")
         # Grab answer values
-        answer_values = [i[0] for i in re.findall(r'Answer: (.+)\n', text)]
+        answer_values = [i.strip() for i in re.findall(r'Answer: (.+)\n', text)]
         if len(answer_values) == 0:
             continue
         # Can safely remove the first part of the value since the header will always be at the top of the page
@@ -95,7 +93,7 @@ def extract_qa_pairs(pdf_path):
                 "answer": []
             }
             # Clean up remaining parts of question by removing everything after the answer
-            if (re.match(r'Answer: .+\n', question)):
+            if (re.search(r'Answer: .+\n', question)):
                 question = "\n".join(re.split(r'Answer: .+\n', question)[:-1])
                 
             # Determine if the question is multiple choice
@@ -125,6 +123,7 @@ def extract_qa_pairs(pdf_path):
 
 pairs = extract_qa_pairs(sys.argv[1])
 
+print("----------------")
 for qa in pairs:
     print("Question:", qa["question"])
     print("Answer:", qa["answer"])
