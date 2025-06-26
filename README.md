@@ -48,3 +48,5 @@ The code itself is currently slightly messy but the main pipeline is as so:
             -   I have implemented this solution
     -   Math does not show up properly
         -   A solution I was thinking of was to pass along information about the bounding boxes of each text block during the preprocessing step. Then, inside `parse_pdf_content` the bounding box of the text could be calculated and PyMuPDF could be used to create an image of the text. This would then be sent to a LLM (such as ChatGPT or Gemini), which would then output the LaTeX for the math.
+    - List I to List II questions are not properly formatted
+        - This can be handled by simply detecting of the question is in that format and changing the format of the output (or even the format of the question data) accordingly
