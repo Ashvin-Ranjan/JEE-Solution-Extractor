@@ -4,6 +4,8 @@ Extracts the question-answer pairs from JEE Advanced papers.
 
 ### Running Instructions
 
+Ensure you have an up-to-date installation of python (my installation is 3.12.9)
+
 Install `pymupdf` and `pillow`:
 
 ```
