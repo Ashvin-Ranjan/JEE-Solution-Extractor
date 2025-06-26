@@ -2,6 +2,8 @@ import fitz
 import re
 import io
 from PIL import Image
+import sys
+import json
 
 # Question format will be as such
 # {
@@ -80,8 +82,6 @@ def extract_qa_pairs(pdf_path):
             continue
         # Can safely remove the first part of the value since the header will always be at the top of the page
         question_split = re.split(r'Q\.\d+ +', text)[1:]
-        print(question_split)
-        print(answer_values)
         if len(question_split) != len(answer_values):
             raise ValueError("Question and answer amount do not line up!")
         for i, question in enumerate(question_split):
@@ -89,7 +89,9 @@ def extract_qa_pairs(pdf_path):
                 "answer": []
             }
             # Clean up remaining parts of question by removing everything after the answer
-            question = re.split(r'Answer: .+\n', question)[0]
+            if (re.match(r'Answer: .+\n', question)):
+                question = "\n".join(re.split(r'Answer: .+\n', question)[:-1])
+                
             # Determine if the question is multiple choice
             if re.match(r'[A-D](, [A-D])*', answer_values[i]):
                 # The last 8 parts are the answers (since in the reconstruction process the answers may have gotten out of order)
@@ -117,7 +119,12 @@ def extract_qa_pairs(pdf_path):
 
     return qa_list
 
-for qa in extract_qa_pairs("stress.pdf"):
+pairs = extract_qa_pairs(sys.argv[1])
+
+for qa in pairs:
     print("Question:", qa["question"])
     print("Answer:", qa["answer"])
     print("----------------")
+
+with open('output/out.json', "w") as f:
+    f.write(json.dumps(pairs))
